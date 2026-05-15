@@ -193,3 +193,44 @@ These show "PLACEHOLDER" or "ADAPTER_REQUIRED" badges:
 **DEVELOPMENT BUILD - NOT PRODUCTION READY**
 
 See [FINAL_AUDIT.md](./FINAL_AUDIT.md) for complete status.
+
+---
+
+## Relay Server Integration
+
+The Android APK can connect to either:
+
+1. **Direct Mode** (default): Connect to OpenHands Cloud at `https://app.all-hands.dev`
+2. **Relay Mode**: Connect to local relay server
+
+### Relay Mode Setup
+
+1. **Start relay server**:
+```bash
+cd /workspace/openhands-relay
+uv run python main.py
+```
+
+2. **On Android emulator**:
+- Server URL: `http://10.0.2.2:8000` (emulator localhost)
+- Profile Type: Select **Relay**
+
+3. **On real device**:
+- Use LAN IP: `http://<YOUR-LAN-IP>:8000`
+- Profile Type: Select **Relay**
+
+### Capabilities (Relay Mode)
+
+| Feature | Status |
+|---------|--------|
+| Sessions list | Works if backend configured |
+| Skills list | Works if backend configured |
+| MCP tools | Works if backend configured |
+| Capability detection | ✅ Works |
+| Workflow execution | ADAPTER_REQUIRED |
+
+### No Fake Data
+
+- Empty lists stay empty (no faked sessions/skills/tools)
+- If relay returns empty, Android shows real empty state
+- ADAPTER_REQUIRED shown exactly when relay returns adapter_required

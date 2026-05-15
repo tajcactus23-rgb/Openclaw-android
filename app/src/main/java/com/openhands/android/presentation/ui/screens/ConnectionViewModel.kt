@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.openhands.android.data.repository.ConnectionRepository
 import com.openhands.android.domain.model.ConnectionProfile
 import com.openhands.android.domain.model.ConnectionStatus
+import com.openhands.android.domain.model.ProfileType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,6 +20,7 @@ data class ConnectionUiState(
     val serverUrl: String = "https://app.all-hands.dev",
     val apiKey: String = "",
     val profileName: String = "",
+    val profileType: ProfileType = ProfileType.DIRECT,  // NEW: relay support
     val status: ConnectionStatus? = null,
     val selectedProfile: ConnectionProfile? = null,
     val isTesting: Boolean = false,
@@ -68,10 +70,19 @@ class ConnectionViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(profileName = name)
     }
 
+    fun updateProfileType(type: ProfileType) {
+        _uiState.value = _uiState.value.copy(profileType = type)
+    }
+
     fun testConnection() {
         val state = _uiState.value
-        if (state.serverUrl.isBlank() || state.apiKey.isBlank()) {
-            _uiState.value = state.copy(error = "Server URL and API Key are required")
+        // For relay mode, allow empty API key
+        if (state.serverUrl.isBlank()) {
+            _uiState.value = state.copy(error = "Server URL is required")
+            return
+        }
+        if (state.profileType == ProfileType.DIRECT && state.apiKey.isBlank()) {
+            _uiState.value = state.copy(error = "API Key is required for Direct mode")
             return
         }
 
@@ -81,7 +92,8 @@ class ConnectionViewModel @Inject constructor(
             val profile = ConnectionProfile(
                 name = state.profileName.ifBlank { "Default" },
                 serverUrl = state.serverUrl,
-                apiKey = state.apiKey
+                apiKey = state.apiKey,
+                profileType = state.profileType
             )
 
             val result = repository.connectProfile(profile)

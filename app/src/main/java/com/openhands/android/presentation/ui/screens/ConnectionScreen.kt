@@ -1,5 +1,7 @@
 package com.openhands.android.presentation.ui.screens
 
+import com.openhands.android.domain.model.ProfileType
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -90,10 +93,31 @@ fun ConnectionScreen(
             value = uiState.serverUrl,
             onValueChange = viewModel::updateServerUrl,
             label = { Text("Server URL") },
-            placeholder = { Text("https://app.all-hands.dev") },
+            placeholder = { Text("https://app.all-hands.dev or http://localhost:8000") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Profile Type Selector
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = uiState.profileType == ProfileType.DIRECT,
+                onClick = { viewModel.updateProfileType(ProfileType.DIRECT) },
+                label = { Text("Direct (OpenHands)") },
+                modifier = Modifier.weight(1f)
+            )
+            FilterChip(
+                selected = uiState.profileType == ProfileType.RELAY,
+                onClick = { viewModel.updateProfileType(ProfileType.RELAY) },
+                label = { Text("Relay") },
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -101,7 +125,7 @@ fun ConnectionScreen(
             value = uiState.apiKey,
             onValueChange = viewModel::updateApiKey,
             label = { Text("API Key") },
-            placeholder = { Text("Enter your OpenHands API key") },
+            placeholder = { Text("Enter your API key (optional for relay)") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             visualTransformation = PasswordVisualTransformation()
