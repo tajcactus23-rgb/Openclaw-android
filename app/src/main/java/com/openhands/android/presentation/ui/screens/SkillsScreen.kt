@@ -28,15 +28,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.openhands.android.domain.model.ProfileType
 
 // SECTION 6: SKILL BUILDER
 @Composable
-fun SkillsScreen() {
+fun SkillsScreen(
+    // Profile type passed from navigation - use RELAY to call relay API
+    profileType: ProfileType = ProfileType.DIRECT
+) {
     data class Skill(val name: String, val content: String, val trigger: String)
     
     var skills by remember { mutableStateOf(listOf<Skill>()) }
     var newSkillName by remember { mutableStateOf("") }
     var newSkillContent by remember { mutableStateOf("") }
+    var isCloudSyncEnabled by remember(profileType) { mutableStateOf(profileType == ProfileType.RELAY) }
+
+    // Show LOCAL_ONLY or synced badge
+    val syncBadge = if (profileType == ProfileType.RELAY) "Try relay" else "LOCAL_ONLY"
 
     fun saveSkill() {
         if (newSkillName.isNotBlank()) {
@@ -51,6 +60,14 @@ fun SkillsScreen() {
             .verticalScroll(rememberScrollState())
     ) {
         Text("Skill Builder", style = MaterialTheme.typography.headlineMedium)
+
+        // Sync badge: show LOCAL_ONLY for DIRECT, show sync status for RELAY
+        Text(
+            "Sync: $syncBadge",
+            style = MaterialTheme.typography.bodySmall,
+            color = if (syncBadge == "LOCAL_ONLY") Color.Gray else if (syncBadge == "SYNCED") Color.Green else Color.Red,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
         Text("Saved Skills", style = MaterialTheme.typography.titleMedium)
         

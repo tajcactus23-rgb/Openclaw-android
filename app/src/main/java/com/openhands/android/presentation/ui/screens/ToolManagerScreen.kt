@@ -21,10 +21,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.openhands.android.domain.model.ProfileType
 
 // SECTION 9: MCP / TOOL MANAGER
 @Composable
-fun ToolManagerScreen() {
+fun ToolManagerScreen(
+    profileType: ProfileType = ProfileType.DIRECT
+) {
     // Available tools - from OpenHands capabilities
     val availableTools = remember { listOf(
         "Bash" to true,
@@ -39,10 +42,20 @@ fun ToolManagerScreen() {
     
     var enabledTools by remember { mutableStateOf(setOf("Bash", "Read", "Write")) }
     var mcpStatus by remember { mutableStateOf("No MCP servers configured") }
+    
+    // MCP status based on profile type
+    val mcpBadge = when {
+        profileType == ProfileType.RELAY -> "Try relay" 
+        else -> "ADAPTER_REQUIRED"
+    }
 
     // Test MCP connection
     fun testMcpConnection() {
-        mcpStatus = "ADAPTER REQUIRED - MCP requires project adapter"
+        mcpStatus = if (profileType == ProfileType.RELAY) {
+            "Use relay GET /api/v1/mcp/tools"
+        } else {
+            "ADAPTER_REQUIRED"
+        }
     }
 
     Column(
@@ -50,6 +63,14 @@ fun ToolManagerScreen() {
             .verticalScroll(rememberScrollState())
     ) {
         Text("Tool Manager", style = MaterialTheme.typography.headlineMedium)
+
+        // MCP status badge
+        Text(
+            "MCP: $mcpBadge",
+            style = MaterialTheme.typography.bodySmall,
+            color = if (mcpBadge == "ADAPTER_REQUIRED") Color.Red else Color.Green,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
         Text("MCP Configuration", style = MaterialTheme.typography.titleMedium)
         Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {

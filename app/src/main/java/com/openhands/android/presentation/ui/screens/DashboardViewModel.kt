@@ -7,6 +7,7 @@ import com.openhands.android.data.remote.OpenHandsApi
 import com.openhands.android.domain.model.AgentSession
 import com.openhands.android.domain.model.CapabilityState
 import com.openhands.android.domain.model.LogEntry
+import com.openhands.android.domain.model.ProfileType
 import com.openhands.android.domain.model.RuntimeStatus
 import com.openhands.android.domain.model.TaskSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -65,26 +66,31 @@ class DashboardViewModel @Inject constructor(
 
                     result.fold(
                         onSuccess = { status ->
-                            // Connected - but sessions/tasks/logs need separate API endpoints
-                            // which don't exist in OpenHands Cloud public API
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                currentAgent = "OpenHands Agent",
-                                currentModel = "claude-sonnet-4-20250529",
-                                runtimeStatus = RuntimeStatus(
-                                    isConnected = status.isConnected,
-                                    isRunning = status.isConnected,
-                                    serverUrl = profile.serverUrl,
-                                    activeSandboxes = 1,
-                                    uptime = "2h 34m",
-                                    version = "0.1.0"
-                                ),
-                                // Mark as adapter required since no public API
-                                sessionsCapability = CapabilityState.ADAPTER_REQUIRED,
-                                tasksCapability = CapabilityState.ADAPTER_REQUIRED,
-                                logsCapability = CapabilityState.ADAPTER_REQUIRED
-                            )
-                            // Note: NOT loading mock data - showing adapter-required state
+                            // Check profile type
+                            val isRelay = profile.profileType == ProfileType.RELAY
+                            
+                            if (isRelay) {
+                                // RELAY MODE: Try to get capabilities and sessions
+                                loadFromRelay(profile)
+                            } else {
+                                // DIRECT MODE: OpenHands Cloud - sessions API not available
+                                _uiState.value = _uiState.value.copy(
+                                    isLoading = false,
+                                    currentAgent = "OpenHands Agent",
+                                    currentModel = "claude-sonnet-4-20250529",
+                                    runtimeStatus = RuntimeStatus(
+                                        isConnected = status.isConnected,
+                                        isRunning = status.isConnected,
+                                        serverUrl = profile.serverUrl,
+                                        activeSandboxes = 1,
+                                        uptime = "2h 34m",
+                                        version = "0.1.0"
+                                    ),
+                                    sessionsCapability = CapabilityState.ADAPTER_REQUIRED,
+                                    tasksCapability = CapabilityState.ADAPTER_REQUIRED,
+                                    logsCapability = CapabilityState.ADAPTER_REQUIRED
+                                )
+                            }
                         },
                         onFailure = { e ->
                             _uiState.value = _uiState.value.copy(
@@ -120,5 +126,93 @@ class DashboardViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    // Load data from relay server
+    private fun loadFromRelay(profile: com.openhands.android.domain.model.ConnectionProfile) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            try {
+                // Get capabilities first
+                val capsResult = api.getCapabilities()
+                capsResult.fold(
+                    onSuccess = { capabilities ->
+                        // Map relay capabilities to UI state
+                        val sessionsCap = capabilities.find { it.name == "sessions" }?.status
+                        val tasksCap = capabilities.find { it.name == "skills_sync" }?.status
+                        val logsCap = capabilities.find { it.name == "mcp_tools" }?.status
+
+                        _uiState.value = _uiState.value.copy(
+                            sessionsCapability = when (sessionsCap) {
+                                "available" -> CapabilityState.SUPPORTED
+                                "adapter_required" -> CapabilityState.ADAPTER_REQUIRED
+                                "local_only" -> CapabilityState.PARTIALLY_SUPPORTED
+                                else -> CapabilityState.UNAVAILABLE
+                            },
+                            tasksCapability = when (tasksCap) {
+                                "available" -> CapabilityState.SUPPORTED
+                                "adapter_required" -> CapabilityState.ADAPTER_REQUIRED
+                                "local_only" -> CapabilityState.PARTIALLY_SUPPORTED
+                                else -> CapabilityState.UNAVAILABLE
+                            },
+                            logsCapability = when (logsCap) {
+                                "available" -> CapabilityState.SUPPORTED
+                                "adapter_required" -> CapabilityState.ADAPTER_REQUIRED
+                                "local_only" -> CapabilityState.PARTIALLY_SUPPORTED
+                                else -> CapabilityState.UNAVAILABLE
+                            }
+                        )
+
+                        // If sessions available, try to get them
+                        if (sessionsCap == "available") {
+                            val sessionsResult = api.getSessions()
+                            sessionsResult.fold(
+                                onSuccess = { sessions ->
+                                    _activeSessions.value = sessions.map { s ->
+                                        AgentSession(
+                                            id = s.id,
+                                            name = s.name,
+                                            status = s.status,
+                                            workspace = s.workspace,
+                                            startedAt = s.startedAt,
+                                            lastActivity = s.lastActivity
+                                        )
+                                    }
+                                },
+                                onFailure = { /* Keep empty */ }
+                            )
+                        }
+                    },
+                    onFailure = {
+                        _uiState.value = _uiState.value.copy(
+                            sessionsCapability = CapabilityState.UNAVAILABLE,
+                            tasksCapability = CapabilityState.UNAVAILABLE,
+                            logsCapability = CapabilityState.UNAVAILABLE
+                        )
+                    }
+                )
+
+                // Set runtime status
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    currentAgent = "Relay Agent",
+                    runtimeStatus = RuntimeStatus(
+                        isConnected = true,
+                        isRunning = true,
+                        serverUrl = profile.serverUrl,
+                        activeSandboxes = _activeSessions.value.size.coerceAtLeast(0),
+                        uptime = "Connected",
+                        version = "Relay"
+                    )
+                )
+
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message
+                )
+            }
+        }
     }
 }
