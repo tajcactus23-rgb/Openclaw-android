@@ -140,9 +140,8 @@ These show "PLACEHOLDER" or "ADAPTER_REQUIRED" badges:
 
 ## Missing APIs
 
-- `/api/sessions` - Active sessions
-- `/api/skills/sync` - Cloud sync
-- `/api/workflows/{id}/execute` - Workflow run
+- `/api/sessions` - Active sessions (use relay)
+- `/api/skills/sync` - Cloud sync (use relay)
 
 ---
 
@@ -227,7 +226,7 @@ uv run python main.py
 | Skills list | Works if backend configured |
 | MCP tools | Works if backend configured |
 | Capability detection | ✅ Works |
-| Workflow execution | ADAPTER_REQUIRED |
+| Workflow execution | ✅ Implemented (local runner) |
 
 ### No Fake Data
 
