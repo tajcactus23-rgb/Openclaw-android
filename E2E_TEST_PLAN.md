@@ -73,9 +73,9 @@ This document defines end-to-end test procedures for validating the full Android
 
 | Environment | URL |
 |--------------|-----|
-| Localhost (emulator) | http://10.0.2.2:8080 |
-| Localhost (physical) | http://localhost:8080 |
-| LAN IP | http://192.168.x.x:8080 |
+| Localhost (emulator) | http://10.0.2.2:8000 |
+| Localhost (physical) | http://localhost:8000 |
+| LAN IP | http://192.168.x.x:8000 |
 
 ### Test Credentials
 
@@ -104,13 +104,13 @@ OpenHands API Key: test-key-for-e2e (if using test relay)
 
 ```bash
 # Start relay
-cd /workspace/openhands-relay && uv run uvicorn main:app --host 0.0.0.0 --port 8080
+cd /workspace/openhands-relay && uv run uvicorn main:app --host 0.0.0.0 --port 8000
 
 # Test API endpoints
-curl http://localhost:8080/api/v1/health
-curl http://localhost:8080/api/v1/runtime/sessions
-curl http://localhost:8080/api/v1/runtime/queue
-curl http://localhost:8080/api/v1/runtime/events
+curl http://localhost:8000/api/v1/health
+curl http://localhost:8000/api/v1/runtime/sessions
+curl http://localhost:8000/api/v1/runtime/queue
+curl http://localhost:8000/api/v1/runtime/events
 
 # Test from device (if network allows)
 adb shell am start -n com.openhands.android/com.openhands.android.MainActivity

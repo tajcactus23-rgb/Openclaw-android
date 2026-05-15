@@ -1,7 +1,7 @@
 # Server Smoke Test Report
 
 **Date**: 2026-05-15  
-**Environment**: relay server (`127.0.0.1:8080`)  
+**Environment**: relay server (`127.0.0.1:8000`)  
 **Status**: ✅ PASSED
 
 ---
@@ -29,42 +29,42 @@
 ```bash
 # Start relay
 cd /workspace/openhands-relay
-uv run uvicorn main:app --host 127.0.0.1 --port 8080 &
+uv run uvicorn main:app --host 127.0.0.1 --port 8000 &
 
 # Test 1: Health
-curl http://127.0.0.1:8080/
+curl http://127.0.0.1:8000/
 
 # Test 2: Capabilities
-curl http://127.0.0.1:8080/api/v1/capabilities
+curl http://127.0.0.1:8000/api/v1/capabilities
 
 # Test 3: Queue
-curl http://127.0.0.1:8080/api/v1/runtime/queue
+curl http://127.0.0.1:8000/api/v1/runtime/queue
 
 # Test 4: Sessions
-curl http://127.0.0.1:8080/api/v1/runtime/sessions
+curl http://127.0.0.1:8000/api/v1/runtime/sessions
 
 # Test 5: Execute (validation error expected)
-curl -X POST http://127.0.0.1:8080/api/v1/workflows/execute \
+curl -X POST http://127.0.0.1:8000/api/v1/workflows/execute \
   -H "Content-Type: application/json" \
   -d '{"workflow_id":"test","name":"test","nodes":[]}'
 
 # Test 6: Execution list
-curl http://127.0.0.1:8080/api/v1/workflows/executions
+curl http://127.0.0.1:8000/api/v1/workflows/executions
 
 # Test 7: Get execution (not found expected)
-curl http://127.0.0.1:8080/api/v1/workflows/executions/nonexistent
+curl http://127.0.0.1:8000/api/v1/workflows/executions/nonexistent
 
 # Test 8: Get logs (not found expected)
-curl http://127.0.0.1:8080/api/v1/workflows/executions/nonexistent/logs
+curl http://127.0.0.1:8000/api/v1/workflows/executions/nonexistent/logs
 
 # Test 9: Cancel (not found expected)
-curl -X POST http://127.0.0.1:8080/api/v1/workflows/executions/nonexistent/cancel
+curl -X POST http://127.0.0.1:8000/api/v1/workflows/executions/nonexistent/cancel
 
 # Test 10: Retry (not found expected)
-curl -X POST http://127.0.0.1:8080/api/v1/workflows/executions/nonexistent/retry
+curl -X POST http://127.0.0.1:8000/api/v1/workflows/executions/nonexistent/retry
 
 # Test 11: SSE events
-curl -I http://127.0.0.1:8080/api/v1/runtime/events
+curl -I http://127.0.0.1:8000/api/v1/runtime/events
 ```
 
 ---
