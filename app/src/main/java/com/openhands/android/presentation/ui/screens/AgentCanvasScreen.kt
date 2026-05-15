@@ -48,6 +48,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.openhands.android.data.remote.WorkflowApi
+import com.openhands.android.data.remote.WorkflowExecuteRequest
+import com.openhands.android.data.remote.WorkflowExecutionStatus
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -79,6 +82,77 @@ fun AgentCanvasScreen() {
     var connectingFrom by remember { mutableStateOf<String?>(null) }
     var graphValid by remember { mutableStateOf(true) }
     var lastSaved by remember { mutableStateOf("") }
+    var executionId by remember { mutableStateOf("") }
+    var executionStatus by remember { mutableStateOf("") }
+    var executionLogs by remember { mutableStateOf(listOf<String>()) }
+    var executionHistory by remember { mutableStateOf(listOf<WorkflowExecutionStatus>()) }
+    var isPolling by remember { mutableStateOf(false) }
+    var executionError by remember { mutableStateOf("") }
+
+    val coroutineScope = remember { CoroutineScope(Dispatchers.Main) }
+
+    fun runWorkflow() {
+        coroutineScope.launch {
+            try {
+                val nodesList = nodes.map { node ->
+                    mapOf("id" to node.id, "type" to node.type.name.lowercase(), "name" to node.label, "config" to node.config)
+                }
+                val request = WorkflowExecuteRequest(workflowId = "canvas-" + System.currentTimeMillis(), name = workflowName, nodes = nodesList)
+                
+                executionStatus = "running"
+                executionError = ""
+                isPolling = true
+                
+                val result = withContext(Dispatchers.IO) {
+                    val api = WorkflowApi(okhttp3.OkHttpClient(), com.squareup.moshi.Moshi.Builder().build(), "http://10.0.2.2:8000")
+                    api.executeWorkflow(request)
+                }
+                
+                result.onSuccess { response ->
+                    executionId = response.executionId
+                    executionStatus = response.status
+                    
+                    while (isPolling && executionStatus == "running") {
+                        Thread.sleep(1000)
+                        val statusResult = withContext(Dispatchers.IO) {
+                            val api = WorkflowApi(okhttp3.OkHttpClient(), com.squareup.moshi.Moshi.Builder().build(), "http://10.0.2.2:8000")
+                            api.getWorkflowExecution(executionId)
+                        }
+                        statusResult.onSuccess { status ->
+                            executionStatus = status.status
+                            if (status.status != "running") {
+                                isPolling = false
+                                val logsResult = withContext(Dispatchers.IO) {
+                                    val api = WorkflowApi(okhttp3.OkHttpClient(), com.squareup.moshi.Moshi.Builder().build(), "http://10.0.2.2:8000")
+                                    api.getWorkflowExecutionLogs(executionId)
+                                }
+                                logsResult.onSuccess { logs -> executionLogs = logs.map { "${it.level}: ${it.message}" } }
+                            }
+                        }
+                    }
+                }
+                result.onFailure { error ->
+                    executionError = error.message ?: "Execution failed"
+                    executionStatus = "failed"
+                    isPolling = false
+                }
+            } catch (e: Exception) {
+                executionError = e.message ?: "Unknown error"
+                executionStatus = "failed"
+                isPolling = false
+            }
+        }
+    }
+
+    fun loadHistory() {
+        coroutineScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                val api = WorkflowApi(okhttp3.OkHttpClient(), com.squareup.moshi.Moshi.Builder().build(), "http://10.0.2.2:8000")
+                api.listWorkflowExecutions()
+            }
+            result.onSuccess { list -> executionHistory = list }
+        }
+    }
 
     fun buildWorkflowJson(): String {
         val json = JSONObject()
@@ -277,10 +351,31 @@ fun AgentCanvasScreen() {
         Text(lastSaved, style = MaterialTheme.typography.bodySmall, color = Color(0xFF1565C0))
         Text("Graph valid: $graphValid", style = MaterialTheme.typography.bodySmall, color = if (graphValid) Color(0xFF2E7D32) else Color(0xFFD32F2F))
 
-        Button(onClick = { }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), enabled = nodes.isNotEmpty() && graphValid) {
+        Button(onClick = { runWorkflow() }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), enabled = nodes.isNotEmpty() && graphValid) {
             Icon(Icons.Default.PlayArrow, null); Text("Run Workflow")
         }
-        Text("Execution: ADAPTER_REQUIRED", style = MaterialTheme.typography.bodySmall, color = Color(0xFF1565C0))
+        
+        // Execution status display
+        if (executionId.isNotBlank()) {
+            Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Column(Modifier.padding(8.dp)) {
+                    Text("Execution: $executionStatus", style = MaterialTheme.typography.titleSmall)
+                    Text("ID: $executionId", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    if (executionLogs.isNotEmpty()) {
+                        Text("Logs:", style = MaterialTheme.typography.labelSmall)
+                        executionLogs.take(5).forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    }
+                    if (executionError.isNotBlank()) {
+                        Text("Error: $executionError", style = MaterialTheme.typography.bodySmall, color = Color.Red)
+                    }
+                    if (executionStatus == "running") {
+                        Button(onClick = { isPolling = false }, modifier = Modifier.padding(top = 4.dp)) { Text("Cancel") }
+                    }
+                }
+            }
+        } else {
+            Text("Execution: ADAPTER_REQUIRED - Connect relay at http://10.0.2.2:8000", style = MaterialTheme.typography.bodySmall, color = Color(0xFF1565C0))
+        }
         Spacer(Modifier.padding(16.dp))
     }
 }

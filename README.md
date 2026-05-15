@@ -226,10 +226,53 @@ uv run python main.py
 | Skills list | Works if backend configured |
 | MCP tools | Works if backend configured |
 | Capability detection | ✅ Works |
-| Workflow execution | ✅ Implemented (local runner) |
+| Workflow execution | 🟡 Local runner (real execution = ADAPTER_REQUIRED) |
 
 ### No Fake Data
 
 - Empty lists stay empty (no faked sessions/skills/tools)
 - If relay returns empty, Android shows real empty state
 - ADAPTER_REQUIRED shown exactly when relay returns adapter_required
+
+---
+
+## Canvas Workflow Execution
+
+### Local Relay Runner
+
+The Agent Canvas screen connects to a local relay server for workflow execution. This is a **local-only runner** that:
+- Validates the workflow JSON structure
+- Executes prompt nodes locally (validation only)
+- Logs execution events
+- Does NOT invoke real OpenHands agents
+
+### Connection
+
+- Android emulator: `http://10.0.2.2:8000` (maps to host machine's port 8000)
+- Physical device: Connect to host IP directly
+- Ensure relay server is running: `python3 main.py` in `/workspace/openhands-relay/`
+
+### Endpoints Used
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/workflows/execute` | POST | Execute workflow |
+| `/api/v1/workflows/executions` | GET | List execution history |
+| `/api/v1/workflows/executions/{id}` | GET | Get execution status |
+| `/api/v1/workflows/executions/{id}/logs` | GET | Get execution logs |
+
+### Limitations
+
+- **ADAPTER_REQUIRED**: Real OpenHands agent execution requires OpenHands Cloud adapter
+- Local runner simulates execution flow but doesn't run AI agents
+- To enable real execution, integrate OpenHands Cloud API
+
+### Running Tests
+
+```bash
+# Start relay server
+cd /workspace/openhands-relay && python3 main.py
+
+# Run relay tests (separate terminal)
+cd /workspace/openhands-relay && python3 -m pytest test_main.py -v
+```
