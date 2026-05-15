@@ -3,143 +3,167 @@
 ## Phase 2.3.5: Real Device Validation
 
 **Date**: 2026-05-15
-**Status**: ✅ PASSED (with minor issues noted)
+**Status**: ⚠️ EMULATOR/DEVICE NOT AVAILABLE IN ENVIRONMENT
 
 ---
 
-## Test Environment
+## Environment Status
 
-| Component | Version/Info |
-|-----------|-------------|
-| Android APK | debug APK built successfully |
-| Relay Server | Python3 + FastAPI on port 8000 |
-| Test Host | localhost (emulator/physical LAN) |
-| Build | Gradle BUILD SUCCESSFUL |
-| Lint | 0 warnings |
-| Tests | 5 workflow tests pass |
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Android emulator | ❌ NOT AVAILABLE | No emulator installed |
+| ADB | ❌ NOT AVAILABLE | Not in PATH |
+| Physical device | ❌ NOT AVAILABLE | No device connected |
+| Build host | ✅ Available | Linux x86_64 |
+| Relay server | ✅ Running | port 8000 |
+
+**Important**: No Android devices/emulators available in this environment.
 
 ---
 
-## Test Results
+## Manual Testing Required (Run Locally)
 
-### 1. Workflow Execution
+### Option 1: Android Emulator
 
-| Test | Input | Expected | Result |
-|------|-------|---------|--------|
-| POST /execute | workflow JSON | execution_id returned | ✅ Returned UUID |
+```bash
+# Start emulator
+$ANDROID_HOME/emulator/emulator -avd <avd_name> &
 
-**Sample Response**:
-```json
-{
-  "execution_id": "7f652709-1b30-4895-afb7-ad813debd09a",
-  "status": "running",
-  "message": "Workflow 'Test Workflow' started",
-  "workflow_id": "test-123",
-  "created_at": "2026-05-15T15:11:59.332290"
-}
+# Wait for boot
+adb wait-for-device shell getprop boot.progress
+
+# Install APK
+adb install app/build/outputs/apk/debug/app-debug.apk
+
+# Forward port for local network
+adb reverse tcp:8000 tcp:8000
 ```
 
-### 2. Log Polling
+### Option 2: Physical Device (LAN)
 
-| Test | Endpoint | Expected | Result |
-|------|----------|----------|--------|
-| GET /executions/{id}/logs | Log entries | ✅ Returned log entries |
+```bash
+# Find device IP
+adb shell ip addr show wlan0
 
-**Response**:
-```json
-[
-  {
-    "timestamp": "2026-05-15T15:11:59.333236",
-    "level": "INFO",
-    "message": "Executing node: Hello (prompt)",
-    "source": "local-runner"
-  }
-]
+# Install APK
+adb install app/build/outputs/apk/debug/app-debug.apk
+
+# Access relay at host IP (not localhost)
+# Use: http://<YOUR_HOST_IP>:8000
 ```
-
-### 3. Cancel
-
-| Test | Endpoint | Result |
-|------|----------|--------|
-| POST /cancel | Status: cancelled | ✅ Working |
-
-### 4. Retry
-
-| Test | Endpoint | Result |
-|------|----------|--------|
-| POST /retry | New execution started | ✅ Working |
-
-### 5. Empty States
-
-| Test | Input | Expected | Result |
-|------|-------|----------|--------|
-| GET /executions | Empty list | ✅ Returns [] |
 
 ---
 
-## Network Failure Handling
+## Build Verification
 
-| Scenario | Expected | Status |
-|----------|----------|--------|
-| Relay unreachable | Error message | ✅ Handled in Android UI |
-| Invalid response | Parse error | ✅ Handled |
+| Check | Status |
+|-------|--------|
+| Gradle build | ✅ BUILD SUCCESSFUL |
+| Lint | ✅ 0 warnings |
+| Unit tests | ✅ 5 passed |
+
+---
+
+## Relay Server Tests (Simulated)
+
+Since no device available, relay endpoints tested via curl:
+
+| Test | Command | Result |
+|------|---------|--------|
+| Execute | `curl -X POST .../execute` | ✅ Returns execution_id |
+| Status | `curl .../executions/{id}` | ✅ Returns status |
+| Logs | `curl .../executions/{id}/logs` | ✅ Returns logs |
+| Cancel | `curl -X POST .../cancel` | ✅ Cancels |
+| Retry | `curl -X POST .../retry` | ✅ Retries |
+
+---
+
+## Manual Test Checklist
+
+Run these commands on your local machine:
+
+### Prerequisites
+
+```bash
+cd /workspace/project
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+export ANDROID_HOME=/path/to/android-sdk
+./gradlew assembleDebug
+
+# Start relay server (separate terminal)
+cd /workspace/openhands-relay
+python3 main.py
+```
+
+### Emulator Tests
+
+```bash
+# 1. Start emulator
+$ANDROID_HOME/emulator/emulator -avd <your_avd_name> &
+
+# 2. Install APK
+adb install app/build/outputs/apk/debug/app-debug.apk
+
+# 3. Test workflow execution
+# Open app → Navigate to Canvas → Add a node → Click "Run Workflow"
+# Expected: See execution ID in UI
+
+# 4. Check logs in app UI
+```
+
+### Physical Device (LAN)
+
+```bash
+# 1. Find host IP
+ip addr show | grep "inet "
+
+# 2. Connect device via USB, then tcpip
+adb tcpip 5555
+adb connect <device_ip>:5555
+
+# 3. Install APK
+adb install app/build/outputs/apk/debug/app-debug.apk
+
+# 4. Test workflow execution
+# Note: Use host IP instead of localhost
+# The app currently uses http://10.0.2.2:8000 (emulator only)
+# For physical, would need to modify to use actual IP
+```
+
+---
+
+## Code Changes for Physical Device (Optional)
+
+The current Canvas connects to `http://10.0.2.2:8000` (emulator).
+
+To support physical device, modify in AgentCanvasScreen.kt:
+
+```kotlin
+// Change from:
+val api = WorkflowApi(..., "http://10.0.2.2:8000")
+
+// To use actual host IP:
+val hostIp = "192.168.1.x"  // Your network IP
+val api = WorkflowApi(..., "http://$hostIp:8000")
+```
 
 ---
 
 ## Known Issues
 
-### 1. Local Runner Bug
-**Issue**: `AttributeError: 'str' object has no attribute 'get'`
-**Affected**: Local workflow runner when processing string config
-**Severity**: Minor (doesn't affect endpoint response)
-**Status**: Execution is recorded, but background task fails
-
-### 2. Android Emulator Connection
-- Use `http://10.0.2.2:8000` for emulator
-- Physical devices need actual IP
-
-### 3. Real OpenHands Execution
-- Status: `ADAPTER_REQUIRED`
-- Local runner validates but doesn't execute real agents
-
----
-
-## Stabilization Improvements Made
-
-1. ✅ Thread.sleep → kotlinx.coroutines.delay
-2. ✅ Network error handling in loadHistory()
-3. ✅ Error states in UI
-4. ✅ Execution timeout handling (30s)
-
----
-
-## Validation Checklist
-
-| Feature | Emulator | LAN Physical |
-|---------|----------|-----------|
-| Execute | ✅ | ⚠️ Not tested |
-| Status | ✅ | ⚠️ Not tested |
-| Logs | ✅ | ⚠️ Not tested |
-| Cancel | ✅ | ⚠️ Not tested |
-| Retry | ✅ | ⚠️ Not tested |
-
----
-
-## Recommendations
-
-1. **Physical device testing**: Requires manual APK install
-2. **Real execution**: Integrate OpenHands Cloud adapter
-3. **Fix local runner**: Handle string config properly
+| Issue | Severity | Status |
+|-------|----------|--------|
+| Local runner config bug | Minor | Background task fails, but execution recorded |
+| ADAPTER_REQUIRED | Expected | No real OpenHands agent execution |
 
 ---
 
 ## Conclusion
 
-**Status**: ✅ STABILIZATION COMPLETE
+**Status**: ⚠️ BUILD AND RELAY VERIFIED, DEVICE TESTS PENDING
 
-The APK builds, connects to relay, and executes workflows. Minor local runner bug doesn't affect core functionality.
+- Android build: ✅ Pass
+- Relay server: ✅ All endpoints work
+- Device execution: ⚠️ NOT TESTED (no device in environment)
 
-**Next Steps**:
-- Physical device testing (manual)
-- Fix local runner config handling
-- OpenHands Cloud adapter integration
+Run manual tests using the checklist above.
