@@ -8,8 +8,10 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -129,6 +131,47 @@ class OpenHandsApi @Inject constructor(
             Result.failure(e)
         }
     }
+
+    // Create automation via preset/prompt - real API call
+    suspend fun createAutomation(name: String, prompt: String): Result<AutomationResponse> = withContext(Dispatchers.IO) {
+        try {
+            val requestBody = AutomationRequest(name, prompt, mapOf("type" to "manual"))
+            val json = moshi.adapter(AutomationRequest::class.java).toJson(requestBody)
+            
+            val request = createRequestBuilder()
+                .url("${getBaseUrl()}/api/automation/v1/preset/prompt")
+                .post(json.toRequestBody("application/json".toMediaType()))
+                .build()
+            
+            suspendCoroutine { continuation ->
+                client.newCall(request).enqueue(object : okhttp3.Callback {
+                    override fun onFailure(call: okhttp3.Call, e: IOException) {
+                        continuation.resume(Result.failure(e))
+                    }
+                    
+                    override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                        if (response.isSuccessful) {
+                            val body = response.body?.string()
+                            val autoResponse = body?.let {
+                                try {
+                                    moshi.adapter(AutomationResponse::class.java).fromJson(it)
+                                } catch (e: Exception) { null }
+                            }
+                            if (autoResponse != null) {
+                                continuation.resume(Result.success(autoResponse))
+                            } else {
+                                continuation.resume(Result.failure(Exception("Failed to parse response")))
+                            }
+                        } else {
+                            continuation.resume(Result.failure(Exception("HTTP ${response.code}")))
+                        }
+                    }
+                })
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
 @JsonClass(generateAdapter = true)
@@ -136,4 +179,18 @@ data class UserResponse(
     @Json(name = "id") val id: String,
     @Json(name = "email") val email: String,
     @Json(name = "name") val name: String
+)
+
+@JsonClass(generateAdapter = true)
+data class AutomationRequest(
+    @Json(name = "name") val name: String,
+    @Json(name = "prompt") val prompt: String,
+    @Json(name = "trigger") val trigger: Map<String, String>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class AutomationResponse(
+    @Json(name = "id") val id: String,
+    @Json(name = "name") val name: String,
+    @Json(name = "created_at") val createdAt: String?
 )
