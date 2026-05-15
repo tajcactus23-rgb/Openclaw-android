@@ -32,7 +32,7 @@
 
 ## Exact Completion %
 
-**Overall**: ~47% (11/24 sections real, 5/24 partial/local, 8/24 unknown/placeholder)
+**Overall**: ~48% (11/24 sections real, 5/24 partial/local, 8/24 unknown/placeholder)
 
 | Category | % | Sections |
 |----------|---|----------|
@@ -108,8 +108,7 @@
 |-----------|--------|
 | Unit Tests | ✅ 12 passing |
 | Integration Tests | ❌ None |
-| E2E Tests: вњ… Planned (see E2E_TEST_PLAN.md) |
-| Device Tests | ❌ Not run |
+| Server Smoke Tests | ✅ 11 passing (see SERVER_SMOKE_TEST_REPORT.md) |
 
 ---
 
@@ -154,8 +153,8 @@
 - No physical device connected
 - Must test manually per E2E_TEST_PLAN.md
 
-🟢 **SERVER TESTS PASS**:
-- 4 server smoke tests passed
+🟢 **SERVER SMOKE TESTS PASS**:
+- 11 server smoke tests passed
 - 39 relay unit tests passed
 
 🟡 **MINIMAL UNIT TESTS**:
