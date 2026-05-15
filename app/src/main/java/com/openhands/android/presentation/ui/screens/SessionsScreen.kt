@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 // SECTION 4 cont: Sessions
@@ -20,7 +21,12 @@ fun SessionsScreen() {
     val sessions = remember { emptyList<Map<String, String>>() }
     
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        item { Text("Active Sessions", style = MaterialTheme.typography.headlineMedium) }
+        item {
+            Column {
+                Text("Active Sessions", style = MaterialTheme.typography.headlineMedium)
+                Text("PLACEHOLDER - API not available", style = MaterialTheme.typography.bodySmall, color = Color(0xFFFF9800))
+            }
+        }
         item { Text("Manage your OpenHands agent sessions", style = MaterialTheme.typography.bodySmall) }
         
         if (sessions.isEmpty()) {

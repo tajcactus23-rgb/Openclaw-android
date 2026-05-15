@@ -90,3 +90,81 @@ All features display capability states:
 - 🟡 partially supported  
 - 🔴 unsupported
 - 🔵 adapter required
+---
+
+## How to Build
+
+```bash
+./gradlew assembleDebug
+```
+
+APK: `app/build/outputs/apk/debug/app-debug.apk`
+
+---
+
+## Connect to OpenHands
+
+1. Install APK on Android device
+2. Go to **Connection** screen
+3. Enter your OpenHands server URL (e.g., `https://app.all-hands.dev`)
+4. Enter your API key/token
+5. Tap **Test Connection** - should show "Connected"
+
+---
+
+## Working Screens
+
+| Screen | Status |
+|--------|--------|
+| Connection | Working |
+| Dashboard | Partial (sessions API missing) |
+| Prompt | Working |
+| Skills | Local Only (cloud sync missing) |
+| Files | Working |
+| Notifications | Partial (Android 13+ permission) |
+| Git | Working (local only) |
+| Canvas | Local Only |
+| Theme | Working |
+| Tool Manager | Working (local) |
+
+## Placeholder Screens
+
+These show "PLACEHOLDER" or "ADAPTER_REQUIRED" badges:
+
+- Sessions - No API
+- WebView - Needs adapter
+- Settings - Basic UI
+- Swarm - Untested
+
+---
+
+## Missing APIs
+
+- `/api/sessions` - Active sessions
+- `/api/skills/sync` - Cloud sync
+- `/api/workflows/{id}/execute` - Workflow run
+
+---
+
+## Testing Checklist
+
+- [ ] Add and test connection profile
+- [ ] Dashboard shows connection status
+- [ ] Create, save, run prompt
+- [ ] Skills CRUD works, cloud sync shows disabled
+- [ ] File picker works
+- [ ] Notifications test
+- [ ] Git local detection works
+- [ ] Canvas workflow save/load
+- [ ] Theme export/import
+
+---
+
+## Tech Stack
+
+- Kotlin 1.9.x
+- Jetpack Compose
+- Hilt (DI)
+- DataStore
+- OkHttp + Moshi
+- Material3
