@@ -168,3 +168,28 @@ These show "PLACEHOLDER" or "ADAPTER_REQUIRED" badges:
 - DataStore
 - OkHttp + Moshi
 - Material3
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CHANGELOG.md](./CHANGELOG.md) | Release notes, feature list |
+| [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md) | API gaps, what's stubbed |
+| [SECURITY.md](./SECURITY.md) | Token handling, permissions |
+| [FINAL_AUDIT.md](./FINAL_AUDIT.md) | Full section completion, status |
+
+---
+
+## Version
+
+**1.0.0** - Pre-alpha development build
+
+---
+
+## Status
+
+**DEVELOPMENT BUILD - NOT PRODUCTION READY**
+
+See [FINAL_AUDIT.md](./FINAL_AUDIT.md) for complete status.
