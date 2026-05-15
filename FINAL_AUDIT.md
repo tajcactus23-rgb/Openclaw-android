@@ -149,10 +149,14 @@
 
 ## Testing Gaps 🟢🟡🔴
 
-🔴 **NO E2E TESTING**:
-- No real device testing
-- No real OpenHands server testing  
-- No manual testing
+🔴 **ANDROID DEVICE TESTS NOT AVAILABLE**:
+- No emulator in build environment
+- No physical device connected
+- Must test manually per E2E_TEST_PLAN.md
+
+🟢 **SERVER TESTS PASS**:
+- 4 server smoke tests passed
+- 39 relay unit tests passed
 
 🟡 **MINIMAL UNIT TESTS**:
 - Only 12 passing tests
