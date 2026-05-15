@@ -99,7 +99,7 @@ fun SkillsScreen() {
             Icon(Icons.Default.Add, null); Text("Save Skill")
         }
 
-        Text("Sync Status: ADAPTER REQUIRED", 
+        Text("Sync Status: LOCAL ONLY (cloud sync ADAPTER_REQUIRED)", 
             style = MaterialTheme.typography.bodySmall, color = Color(0xFF1565C0))
 
         Spacer(Modifier.height(80.dp))
