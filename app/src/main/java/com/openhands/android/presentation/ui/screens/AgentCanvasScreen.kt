@@ -113,7 +113,7 @@ fun AgentCanvasScreen() {
                     executionStatus = response.status
                     
                     while (isPolling && executionStatus == "running") {
-                        Thread.sleep(1000)
+                        kotlinx.coroutines.delay(1000)
                         val statusResult = withContext(Dispatchers.IO) {
                             val api = WorkflowApi(okhttp3.OkHttpClient(), com.squareup.moshi.Moshi.Builder().build(), "http://10.0.2.2:8000")
                             api.getWorkflowExecution(executionId)
