@@ -18,6 +18,7 @@
 | 12 | Runtime Monitor | ⚠️ PARTIAL | Some real tests |
 | 12.5 | Phase 2.4 | ✅ RELAY FOUNDATION | Session/queue/API done |
 | 12.6 | Phase 2.4.5 | COMPLETE | SSE + client + UI done |
+| 12.7 | Phase 2.5 | вњ… E2E DOCS | Test plan + LAN setup |
 | 13 | Visual Polish | ✅ REAL | Theme JSON engine |
 | 14 | Final Build | ✅ COMPLETE | Debug APK builds |
 | 15+ | Swarm Mode | ❓ UNKNOWN | Untested |
@@ -31,7 +32,7 @@
 
 ## Exact Completion %
 
-**Overall**: ~46% (11/24 sections real, 5/24 partial/local, 8/24 unknown/placeholder)
+**Overall**: ~47% (11/24 sections real, 5/24 partial/local, 8/24 unknown/placeholder)
 
 | Category | % | Sections |
 |----------|---|----------|
@@ -107,7 +108,7 @@
 |-----------|--------|
 | Unit Tests | ✅ 12 passing |
 | Integration Tests | ❌ None |
-| E2E Tests | ❌ None |
+| E2E Tests: вњ… Planned (see E2E_TEST_PLAN.md) |
 | Device Tests | ❌ Not run |
 
 ---
