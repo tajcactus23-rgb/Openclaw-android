@@ -25,19 +25,28 @@ import androidx.compose.ui.unit.dp
 // SECTION 7: FILE HUB
 @Composable
 fun FilesScreen() {
-    val files = remember { listOf("app-debug.apk", "settings.gradle", "build.gradle") }
+    val files = remember { emptyList<String>() }
     
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("File Hub", style = MaterialTheme.typography.headlineMedium) }
         
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { /* Pick file */ }, modifier = Modifier.weight(1f)) { Icon(Icons.Default.Folder, null); Text("Browse") }
-            Button(onClick = { /* Attach */ }, modifier = Modifier.weight(1f)) { Icon(Icons.Default.AttachFile, null); Text("Attach") }
+            Button(onClick = { /* Pick file */ }, modifier = Modifier.weight(1f), enabled = false) { Icon(Icons.Default.Folder, null); Text("Browse") }
+            Button(onClick = { /* Attach */ }, modifier = Modifier.weight(1f), enabled = false) { Icon(Icons.Default.AttachFile, null); Text("Attach") }
         } }
         
         item { Text("Workspace Files", style = MaterialTheme.typography.titleMedium) }
-        files.forEach { name ->
-            item { Card(Modifier.fillMaxWidth()) { Text(name, Modifier.padding(12.dp)) } }
+        
+        if (files.isEmpty()) {
+            item { 
+                Card(Modifier.fillMaxWidth()) { 
+                    Text("No files - ADAPTER REQUIRED for workspace file access", Modifier.padding(12.dp)) 
+                } 
+            }
+        } else {
+            files.forEach { name ->
+                item { Card(Modifier.fillMaxWidth()) { Text(name, Modifier.padding(12.dp)) } }
+            }
         }
     }
 }
