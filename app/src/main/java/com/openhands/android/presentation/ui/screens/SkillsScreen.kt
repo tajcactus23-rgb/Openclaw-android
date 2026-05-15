@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 fun SkillsScreen() {
     var skillContent by remember { mutableStateOf("") }
     var trigger by remember { mutableStateOf("") }
-    var skills by remember { mutableStateOf(listOf("code-review", "debug", "git", "test")) }
+    var skills by remember { mutableStateOf(emptyList<String>()) }
     
     Column(
         Modifier.fillMaxSize().padding(16.dp)

@@ -8,14 +8,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -23,13 +19,7 @@ import androidx.compose.ui.unit.dp
 // SECTION 9: MCP / TOOL MANAGER
 @Composable
 fun ToolManagerScreen() {
-    var tools by remember { mutableStateOf(mapOf(
-        "Bash" to true,
-        "File Editor" to true,
-        "Browser" to false,
-        "Git" to false,
-        "Search" to false
-    ))}
+    val tools = remember { emptyMap<String, Boolean>() }
     
     Column(
         Modifier.fillMaxSize().padding(16.dp)
@@ -42,8 +32,9 @@ fun ToolManagerScreen() {
             style = MaterialTheme.typography.bodySmall, color = Color(0xFF1565C0))
         
         Text("Available Tools", style = MaterialTheme.typography.titleMedium)
-        tools.forEach { (tool, enabled) ->
-            Text("[$tool]", Modifier.padding(4.dp))
+        
+        if (tools.isEmpty()) {
+            Text("No tools - ADAPTER REQUIRED", Modifier.padding(vertical = 4.dp))
         }
         
         Text("Server List", style = MaterialTheme.typography.titleMedium)
