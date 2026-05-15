@@ -17,6 +17,7 @@
 | 11 | Git / Repo Ops | ⚠️ LOCAL_ONLY | Local detection |
 | 12 | Runtime Monitor | ⚠️ PARTIAL | Some real tests |
 | 12.5 | Phase 2.4 | ✅ RELAY FOUNDATION | Session/queue/API done |
+| 12.6 | Phase 2.4.5 | ✅ STREAMING DONE | SSE + client done |
 | 13 | Visual Polish | ✅ REAL | Theme JSON engine |
 | 14 | Final Build | ✅ COMPLETE | Debug APK builds |
 | 15+ | Swarm Mode | ❓ UNKNOWN | Untested |
@@ -30,7 +31,7 @@
 
 ## Exact Completion %
 
-**Overall**: ~42% (11/24 sections real, 6/24 partial/local, 7/24 unknown/placeholder)
+**Overall**: ~45% (11/24 sections real, 5/24 partial/local, 8/24 unknown/placeholder)
 
 | Category | % | Sections |
 |----------|---|----------|
