@@ -78,7 +78,21 @@ class RuntimeMonitorViewModel @Inject constructor(
         // Observe queue status
         viewModelScope.launch {
             sseClient?.queueStatus?.collect { queueStatus ->
-                _state.value = _state.value.copy(queueStatus = queueStatus)
+                // Convert RuntimeSSEClient.QueueStatus to QueueStatusResponse
+                queueStatus?.let { qs ->
+                    _state.value = _state.value.copy(
+                        queueStatus = QueueStatusResponse(
+                            queued = qs.queued,
+                            items = qs.items.map { item ->
+                                QueueItem(
+                                    execution_id = item.executionId,
+                                    workflow_id = item.workflowId,
+                                    status = item.status
+                                )
+                            }
+                        )
+                    )
+                }
             }
         }
         

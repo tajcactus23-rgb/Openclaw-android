@@ -36,4 +36,4 @@ Thumbs.db
 # Secrets (never commit)
 *secret*
 *token*
-*.key
+*.key!/app/build/outputs/apk/debug/app-debug.apk
