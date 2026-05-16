@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 sealed class RuntimeEvent {
     data class SessionStart(val sessionId: String, val runtimeType: String) : RuntimeEvent()
     data class SessionEnd(val sessionId: String, val status: String) : RuntimeEvent()
-    data class QueueChange(val queued: Int, val items: List<QueueItem>) : RuntimeEvent()
+    data class QueueChange(val queued: Int, val items: List<SSEQueueItem>) : RuntimeEvent()
     data class ExecutionLog(val executionId: String, val message: String) : RuntimeEvent()
     data class ExecutionComplete(val executionId: String, val status: String) : RuntimeEvent()
     data class Error(val message: String) : RuntimeEvent()
@@ -31,7 +31,7 @@ sealed class RuntimeEvent {
     object Reconnecting : RuntimeEvent()
 }
 
-data class QueueItem(val executionId: String, val workflowId: String, val status: String)
+data class SSEQueueItem(val executionId: String, val workflowId: String, val status: String)
 
 /**
  * Connection state for SSE stream.
@@ -83,7 +83,7 @@ class RuntimeSSEClient(
         private const val MAX_RECONNECT_DELAY_MS = 30000L
     }
     
-    data class QueueStatus(val queued: Int, val items: List<QueueItem>)
+    data class QueueStatus(val queued: Int, val items: List<SSEQueueItem>)
     data class SessionInfo(val id: String, val runtimeType: String, val status: String)
     
     /**
@@ -208,7 +208,7 @@ class RuntimeSSEClient(
                     val items = (json["items"] as? List<*>)?.mapNotNull { item ->
                         val map = item as? Map<*, *>
                         if (map != null) {
-                            QueueItem(
+                            SSEQueueItem(
                                 map["execution_id"] as? String ?: "",
                                 map["workflow_id"] as? String ?: "",
                                 map["status"] as? String ?: ""
@@ -291,9 +291,9 @@ class RuntimeSSEClient(
         _events.value = current
     }
     
-    private suspend fun updateSessions() {
-        // Would poll sessions endpoint here
-        // For now, just trigger refresh
+    private fun updateSessions() {
+        // Sessions are updated via SSE events - no need to poll separately
+        // Just emit a refresh event if needed
     }
     
     /**
