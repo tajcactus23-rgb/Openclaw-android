@@ -2,6 +2,7 @@ package com.openhands.android.di
 
 import android.content.Context
 import com.openhands.android.data.remote.RuntimeApi
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,6 +25,12 @@ object NetworkModule {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
+
+    @Provides
+    @Singleton
+    fun provideMoshi(): Moshi {
+        return Moshi.Builder().build()
+    }
     
     @Provides
     @Singleton
@@ -36,8 +43,9 @@ object NetworkModule {
     @Singleton
     fun provideRuntimeApi(
         client: OkHttpClient,
+        moshi: Moshi,
         baseUrl: String
     ): RuntimeApi {
-        return RuntimeApi(client, baseUrl)
+        return RuntimeApi(client, moshi, baseUrl)
     }
 }
