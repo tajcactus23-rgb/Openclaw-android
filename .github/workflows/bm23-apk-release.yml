@@ -1,0 +1,60 @@
+name: BM23 APK Build
+
+on:
+  push:
+    branches: [ bm23-apk-shell ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build-debug-apk:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Collect APK
+        run: |
+          mkdir -p release
+          cp app/build/outputs/apk/debug/*.apk release/BM23-Openclaw-debug.apk
+          ls -lah release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BM23-Openclaw-debug-apk
+          path: release/BM23-Openclaw-debug.apk
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        if: github.ref == 'refs/heads/bm23-apk-shell'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: bm23-apk-shell-debug
+          name: BM23 Openclaw Debug APK
+          body: |
+            Automated debug APK from bm23-apk-shell.
+            Manual testing required on device.
+          files: release/BM23-Openclaw-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
