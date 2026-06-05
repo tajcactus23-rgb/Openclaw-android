@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 sealed class RuntimeEvent {
     data class SessionStart(val sessionId: String, val runtimeType: String) : RuntimeEvent()
     data class SessionEnd(val sessionId: String, val status: String) : RuntimeEvent()
-    data class QueueChange(val queued: Int, val items: List<QueueItem>) : RuntimeEvent()
+    data class QueueChange(val queued: Int, val items: List<QueueItemSSE>) : RuntimeEvent()
     data class ExecutionLog(val executionId: String, val message: String) : RuntimeEvent()
     data class ExecutionComplete(val executionId: String, val status: String) : RuntimeEvent()
     data class Error(val message: String) : RuntimeEvent()
@@ -31,7 +31,7 @@ sealed class RuntimeEvent {
     object Reconnecting : RuntimeEvent()
 }
 
-data class QueueItem(val executionId: String, val workflowId: String, val status: String)
+data class QueueItemSSE(val executionId: String, val workflowId: String, val status: String)
 
 /**
  * Connection state for SSE stream.
@@ -83,7 +83,7 @@ class RuntimeSSEClient(
         private const val MAX_RECONNECT_DELAY_MS = 30000L
     }
     
-    data class QueueStatus(val queued: Int, val items: List<QueueItem>)
+    data class QueueStatus(val queued: Int, val items: List<QueueItemSSE>)
     data class SessionInfo(val id: String, val runtimeType: String, val status: String)
     
     /**
@@ -195,20 +195,20 @@ class RuntimeSSEClient(
                     val sessionId = json["session_id"] as? String ?: return
                     val runtimeType = json["runtime_type"] as? String ?: return
                     addEvent(RuntimeEvent.SessionStart(sessionId, runtimeType))
-                    updateSessions()
+                    scope.launch { updateSessions() }
                 }
                 "session_end" -> {
                     val sessionId = json["session_id"] as? String ?: return
                     val status = json["status"] as? String ?: return
                     addEvent(RuntimeEvent.SessionEnd(sessionId, status))
-                    updateSessions()
+                    scope.launch { updateSessions() }
                 }
                 "queue_change" -> {
                     val queued = json["queued"] as? Int ?: 0
                     val items = (json["items"] as? List<*>)?.mapNotNull { item ->
                         val map = item as? Map<*, *>
                         if (map != null) {
-                            QueueItem(
+                            QueueItemSSE(
                                 map["execution_id"] as? String ?: "",
                                 map["workflow_id"] as? String ?: "",
                                 map["status"] as? String ?: ""

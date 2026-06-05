@@ -75,13 +75,6 @@ class RuntimeMonitorViewModel @Inject constructor(
             }
         }
         
-        // Observe queue status
-        viewModelScope.launch {
-            sseClient?.queueStatus?.collect { queueStatus ->
-                _state.value = _state.value.copy(queueStatus = queueStatus)
-            }
-        }
-        
         // Connect
         sseClient?.connect()
         
